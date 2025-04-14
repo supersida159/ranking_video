@@ -13,6 +13,7 @@ const (
 	CodePasswordMustContainNumber
 	CodeInvalidEmail
 	CodeUserNotExist
+	CodeJSONBindingError
 )
 
 type AppError struct {
@@ -112,6 +113,21 @@ func ErrUserNotExist(err ...error) *AppError {
 		"Người dùng không tồn tại",
 		"USER_NOT_EXIST",
 		CodeUserNotExist,
+		http.StatusBadRequest,
+	)
+}
+
+func ErrJSONBlindding(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Invalid json format",
+		"Định dạng json không hợp lệ",
+		"INVALID_JSON_FORMAT",
+		CodeJSONBindingError,
 		http.StatusBadRequest,
 	)
 }
