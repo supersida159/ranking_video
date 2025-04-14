@@ -20,11 +20,3 @@ func (p *Paging) Fullfill() {
 		p.Limit = 50
 	}
 }
-
-// PreloadPagination defines the structure for pagination and sorting options
-type PreloadPagination struct {
-	Limit int      `json:"limit"`
-	Page  int      `json:"page"`
-	Sort  []string `json:"sort"` // Support multiple sort fields
-	Total int64    `json:"total"`
-}
