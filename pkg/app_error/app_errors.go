@@ -18,6 +18,18 @@ const (
 	// Database Errors (500)
 	CodeDBInternal
 	CodeRecordNotFound
+
+	// Additional Bad Request Errors (400)
+	CodeInvalidTimeFormat
+	CodeInvalidRequest
+
+	// Internal Server Errors (500) [-170 to -179]
+	CodeInternalServerError ErrorCode = -170 + iota
+	CodeDatabaseConnectionError
+	CodeFailedToConvertToDTO
+	CodeJobRetryError
+	CodeFailedCreateEvent
+	CodeFailedSendEvent
 )
 
 type AppError struct {
@@ -166,5 +178,79 @@ func ErrRecordNotFound(err ...error) *AppError {
 		"RECORD_NOT_FOUND",
 		CodeRecordNotFound,
 		http.StatusNotFound,
+	)
+}
+
+// Additional Bad Request Errors (400)
+func ErrInvalidTimeFormat(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Invalid time format",
+		"Định dạng thời gian không hợp lệ",
+		"INVALID_TIME_FORMAT",
+		CodeInvalidTimeFormat,
+		http.StatusBadRequest,
+	)
+}
+
+func ErrInvalidRequest(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Invalid request",
+		"Yêu cầu không hợp lệ",
+		"INVALID_REQUEST",
+		CodeInvalidRequest,
+		http.StatusBadRequest,
+	)
+}
+
+func ErrInternalServerError(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Internal server error",
+		"Lỗi máy chủ nội bộ",
+		"INTERNAL_SERVER_ERROR",
+		CodeInternalServerError,
+		http.StatusInternalServerError,
+	)
+}
+func ErrFailedCreateEvent(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Failed to create event",
+		"Không thể tạo sự kiện",
+		"FAILED_CREATE_EVENT",
+		CodeFailedCreateEvent,
+		http.StatusInternalServerError,
+	)
+}
+func ErrFailedSendEvent(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Failed to send event to Kafka",
+		"Không thể guit sự kiện đến Kafka",
+		"FAILED_SEND_EVENT",
+		CodeFailedSendEvent,
+		http.StatusInternalServerError,
 	)
 }
