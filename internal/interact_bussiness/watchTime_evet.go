@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"ranking_video/internal/kafka"
 	apperror "ranking_video/pkg/app_error"
 	"time"
 )
@@ -25,9 +26,9 @@ type WatchEventService[T any] struct {
 }
 
 // NewWatchEventService creates a new watch event service
-func NewWatchEventService[T any](evenStorage WatchEventService[T]) *WatchEventService[T] {
+func NewWatchEventService[T any](evenStorage WatchEventService[T], producer *kafka.Producer) *WatchEventService[T] {
 	return &WatchEventService[T]{
-		EventService: NewEventService(evenStorage.storage),
+		EventService: NewEventService(evenStorage.storage, producer),
 		watchStorage: evenStorage.watchStorage,
 	}
 }

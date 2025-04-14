@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"ranking_video/internal/kafka"
 	apperror "ranking_video/pkg/app_error"
 	helper "ranking_video/pkg/utils"
+	"reflect"
 )
 
 // EventServiceInterface defines the common methods for event services
@@ -16,18 +18,35 @@ type EventServiceInterface[T any] interface {
 
 // EventService is a generic service for event entities
 type EventService[T any] struct {
-	storage EventServiceInterface[T]
+	storage  EventServiceInterface[T]
+	producer *kafka.Producer
 }
 
 // NewEventService creates a new event service instance
-func NewEventService[T any](storage EventServiceInterface[T]) *EventService[T] {
+func NewEventService[T any](storage EventServiceInterface[T], producer *kafka.Producer) *EventService[T] {
 	return &EventService[T]{
-		storage: storage,
+		storage:  storage,
+		producer: producer,
 	}
 }
 
-// Add creates a new event record
+// Add creates a new event record and sends a message to Kafka
 func (s *EventService[T]) Add(ctx context.Context, event T) *apperror.AppError {
+	// Get the type name for the event
+	eventType := reflect.TypeOf(event).Name()
+
+	// Create a Kafka event
+	kafkaEvent, err := kafka.NewEvent(eventType, event)
+	if err != nil {
+		return apperror.ErrFailedCreateEvent(err)
+	}
+
+	// Send the event to Kafka
+	if err := s.producer.SendEvent(kafkaEvent); err != nil {
+		return apperror.ErrFailedSendEvent(err)
+	}
+
+	// Continue with the original storage operation
 	return s.storage.Add(ctx, event)
 }
 
