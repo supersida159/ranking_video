@@ -1,11 +1,12 @@
 package app_context
 
 import (
+	dbs "ranking_video/pkg/db"
 	"ranking_video/pkg/localredis"
 
-	"github.com/redis/go-redis/v9"
-	"golang.org/x/oauth2"
 	"gorm.io/gorm"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type AppContext interface {
@@ -20,33 +21,28 @@ type AppContext interface {
 }
 
 type AppCtx struct {
-	Dbs         *dbs.Database
-	UpProvider  uploadprovider.UploadProvider
-	Pb          pubsub.PubSub
-	Cfg         *config.Schema
-	Cache       *localredis.RedisWRealStore
-	RedisClient *redis.Client
-	Validator   *common.Validator
-	Producer    *producers.OrderProducer
-	Consumer    *consumerlocal.SagaConsumer
-	OAuthConfig *oauth2.Config
+	Dbs       *dbs.Database
+	Pb        pubsub.PubSub
+	Cfg       *config.Schema
+	Cache     *localredis.RedisWRealStore
+	Validator *validator.Validate
+	Producer  *producers.OrderProducer
+	Consumer  *consumerlocal.SagaConsumer
 }
 
-func NewAppContext(dbs *dbs.Database, pb pubsub.PubSub, cache *localredis.RedisWRealStore, producer *producers.OrderProducer, consumer *consumerlocal.SagaConsumer, OAuthConfig *oauth2.Config) *AppCtx {
+func NewAppContext(dbs *dbs.Database,
+	pb pubsub.PubSub,
+	cache *localredis.RedisWRealStore,
+	producer *producers.OrderProducer,
+	consumer *consumerlocal.SagaConsumer) *AppCtx {
 	return &AppCtx{
-		Dbs: dbs,
-		UpProvider: uploadprovider.NewS3Provider(config.GetConfig().AWSS3.Bucket,
-			config.GetConfig().AWSS3.Region,
-			config.GetConfig().AWSS3.AccessKeyID,
-			config.GetConfig().AWSS3.SecretAccessKey,
-			config.GetConfig().AWSS3.EndPoint),
-		Pb:          pb,
-		Cfg:         config.GetConfig(),
-		Cache:       cache,
-		Validator:   common.NewValidator(),
-		Producer:    producer,
-		Consumer:    consumer,
-		OAuthConfig: OAuthConfig,
+		Dbs:       dbs,
+		Pb:        pb,
+		Cfg:       config.GetConfig(),
+		Cache:     cache,
+		Validator: validator.New(),
+		Producer:  producer,
+		Consumer:  consumer,
 	}
 }
 
@@ -56,10 +52,6 @@ func (ctx *AppCtx) GetMainDBConnection() *gorm.DB {
 
 func (ctx *AppCtx) GetSecretKey() string {
 	return ctx.Cfg.AuthSecret
-}
-
-func (ctx *AppCtx) UploadProvider() uploadprovider.UploadProvider {
-	return ctx.UpProvider
 }
 
 func (ctx *AppCtx) GetPubSub() pubsub.PubSub {
@@ -74,22 +66,14 @@ func (ctx *AppCtx) GetConfig() *config.Schema {
 	return ctx.Cfg
 }
 
-func (ctx *AppCtx) GetValidatetor() *common.Validator {
-	return ctx.Validator
-}
-
 func (ctx *AppCtx) GetProducer() *producers.OrderProducer {
 	return ctx.Producer
-}
-
-func (ctx *AppCtx) GetRedisClient() *redis.Client {
-	return ctx.RedisClient
 }
 
 func (ctx *AppCtx) GetConsumer() *consumerlocal.SagaConsumer {
 	return ctx.Consumer
 }
 
-func (ctx *AppCtx) GetOAuth() *oauth2.Config {
-	return ctx.OAuthConfig
+func (ctx *AppCtx) GetValidatetor() *validator.Validate {
+	return ctx.Validator
 }
