@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	helper "ranking_video/pkg/utils"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -51,6 +50,7 @@ func (r *EventRepository[T]) Count(ctx context.Context, conditions map[string]in
 func (r *EventRepository[T]) GetList(
 	ctx context.Context,
 	paging *helper.Paging,
+	orderClauses []string,
 	conditions map[string]interface{},
 ) ([]T, error) {
 	var events []T
@@ -70,84 +70,50 @@ func (r *EventRepository[T]) GetList(
 		return nil, err
 	}
 
-	// Apply cursor-based pagination if cursor is provided
-	if !paging.CurrentCursor.IsZero() {
-		query = query.Where("created_at < ?", paging.CurrentCursor)
-	}
-
 	// Apply limit and offset
-	offset := (paging.Page - 1) * paging.Limit
-	query = query.Offset(offset).Limit(paging.Limit)
+	query = r.applyPagination(query, paging)
 
 	// Apply default sorting for cursor-based pagination
-	query = query.Order("created_at DESC")
+	query = r.applySorting(query, orderClauses)
 
 	// Execute query
 	if err := query.Find(&events).Error; err != nil {
 		return nil, err
 	}
 
-	// Set next cursor if there are results
-	if len(events) > 0 {
-		// This assumes the events have a CreatedAt field
-		// You might need to adjust this according to your actual model structure
-		var lastEvent struct {
-			CreatedAt time.Time
-		}
-		if err := query.Last(&lastEvent).Error; err == nil {
-			paging.NextCursor = lastEvent.CreatedAt
-		}
-	}
+	// // Set next cursor if there are results
+	// if len(events) > 0 {
+	// 	// This assumes the events have a CreatedAt field
+	// 	// You might need to adjust this according to your actual model structure
+	// 	var lastEvent struct {
+	// 		CreatedAt time.Time
+	// 	}
+	// 	if err := query.Last(&lastEvent).Error; err == nil {
+	// 		paging.NextCursor = lastEvent.CreatedAt
+	// 	}
+	// }
 
 	return events, nil
 }
 
-// GetListWithPreload retrieves a list of events with sorting, paging, and conditions using PreloadPagination
-func (r *EventRepository[T]) GetListWithPreload(
-	ctx context.Context,
-	pagination *helper.PreloadPagination,
-	conditions map[string]interface{},
-) ([]T, error) {
-	var events []T
-
-	// Ensure pagination is properly set
-	if pagination.Page <= 0 {
-		pagination.Page = 1
+// applyPagination applies pagination parameters to a query
+func (s *EventRepository[T]) applyPagination(query *gorm.DB, paging *helper.Paging) *gorm.DB {
+	if !paging.CurrentCursor.IsZero() {
+		query = query.Where("created_at < ?", paging.CurrentCursor)
+	} else {
+		query = query.Offset((paging.Page - 1) * paging.Limit)
 	}
-	if pagination.Limit <= 0 {
-		pagination.Limit = 50
-	}
+	return query.Limit(paging.Limit)
+}
 
-	query := r.db.WithContext(ctx).Model(new(T))
-
-	// Apply conditions
-	for field, value := range conditions {
-		query = query.Where(fmt.Sprintf("%s = ?", field), value)
-	}
-
-	// Get total count
-	if err := query.Count(&pagination.Total).Error; err != nil {
-		return nil, err
-	}
-
-	// Apply pagination
-	offset := (pagination.Page - 1) * pagination.Limit
-	query = query.Offset(offset).Limit(pagination.Limit)
-
-	// Apply sorting
-	if len(pagination.Sort) > 0 {
-		for _, sort := range pagination.Sort {
-			query = query.Order(sort)
+// applySorting applies sorting parameters to a query
+func (s *EventRepository[T]) applySorting(query *gorm.DB, orderClauses []string) *gorm.DB {
+	if len(orderClauses) > 0 {
+		for _, orderClause := range orderClauses {
+			query = query.Order(orderClause)
 		}
 	} else {
-		// Default sorting
-		query = query.Order("created_at DESC")
+		query = query.Order("%s.created_at desc")
 	}
-
-	// Execute query
-	if err := query.Find(&events).Error; err != nil {
-		return nil, err
-	}
-
-	return events, nil
+	return query
 }
