@@ -14,6 +14,10 @@ const (
 	CodeInvalidEmail
 	CodeUserNotExist
 	CodeJSONBindingError
+
+	// Database Errors (500)
+	CodeDBInternal
+	CodeRecordNotFound
 )
 
 type AppError struct {
@@ -25,19 +29,21 @@ type AppError struct {
 	InternalCode ErrorCode `json:"code"`
 }
 
-// Error implements error.
 func (a *AppError) Error() string {
-	panic("unimplemented")
+	if a.RootErr != nil {
+		return a.RootErr.Error()
+	}
+	return a.MessageEn
 }
 
-func NewErrorResponse(rootErr error, messageEn, messageVi, key string, internalStatusCode ErrorCode, StatusCode int) *AppError {
+func NewErrorResponse(rootErr error, messageEn, messageVi, key string, internalCode ErrorCode, statusCode int) *AppError {
 	return &AppError{
 		RootErr:      rootErr,
 		MessageEn:    messageEn,
 		MessageVi:    messageVi,
 		Key:          key,
-		StatusCode:   StatusCode,
-		InternalCode: internalStatusCode,
+		StatusCode:   statusCode,
+		InternalCode: internalCode,
 	}
 }
 
@@ -117,17 +123,48 @@ func ErrUserNotExist(err ...error) *AppError {
 	)
 }
 
-func ErrJSONBlindding(err ...error) *AppError {
+func ErrJSONBinding(err ...error) *AppError {
 	var rootErr error
 	if len(err) > 0 {
 		rootErr = err[0]
 	}
 	return NewErrorResponse(
 		rootErr,
-		"Invalid json format",
-		"Định dạng json không hợp lệ",
+		"Invalid JSON format",
+		"Định dạng JSON không hợp lệ",
 		"INVALID_JSON_FORMAT",
 		CodeJSONBindingError,
 		http.StatusBadRequest,
+	)
+}
+
+// Database Errors
+func ErrDBInternal(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Internal database error",
+		"Lỗi cơ sở dữ liệu nội bộ",
+		"DB_INTERNAL_ERROR",
+		CodeDBInternal,
+		http.StatusInternalServerError,
+	)
+}
+
+func ErrRecordNotFound(err ...error) *AppError {
+	var rootErr error
+	if len(err) > 0 {
+		rootErr = err[0]
+	}
+	return NewErrorResponse(
+		rootErr,
+		"Record not found",
+		"Không tìm thấy bản ghi",
+		"RECORD_NOT_FOUND",
+		CodeRecordNotFound,
+		http.StatusNotFound,
 	)
 }
