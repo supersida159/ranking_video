@@ -2,9 +2,13 @@ package handler
 
 import (
 	"net/http"
-	"ranking_video/internal/model"
-	"ranking_video/internal/service"
-	"ranking_video/pkg/helper"
+
+	service "ranking_video/internal/interact_bussiness"
+	"ranking_video/internal/models"
+	apperror "ranking_video/pkg/app_error"
+	helper "ranking_video/pkg/utils"
+	"ranking_video/pkg/utils/app_context"
+
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +20,7 @@ import (
 // BaseEventHandler provides common handler functionality for events
 type BaseEventHandler[T any] struct {
 	service service.EventServiceInterface[T]
+	appCtx  app_context.AppContext
 }
 
 // Add creates a new event record
@@ -24,6 +29,12 @@ func (h *BaseEventHandler[T]) Add(ctx *gin.Context) {
 
 	var event T
 	if err := ctx.ShouldBindJSON(&event); err != nil {
+		helper.BuildErrorGinResponse(ctx, apperror.ErrUsernameTooShort())
+		return
+	}
+
+	// Validate using app context validator
+	if err := h.appCtx.GetValidator().ValidateStruct(event); err != nil {
 		helper.BuildErrorGinResponse(ctx, err)
 		return
 	}
@@ -43,12 +54,12 @@ func (h *BaseEventHandler[T]) SoftDelete(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		helper.BuildErrorGinResponse(ctx, err)
+		helper.BuildErrorGinResponse(ctx, apperror.ErrInvalidRequest(err))
 		return
 	}
 
-	if err := h.service.SoftDelete(ctx, uint(id)); err != nil {
-		helper.BuildErrorGinResponse(ctx, err)
+	if appErr := h.service.SoftDelete(ctx, uint(id)); err != nil {
+		helper.BuildErrorGinResponse(ctx, appErr)
 		return
 	}
 
@@ -96,71 +107,76 @@ func (h *BaseEventHandler[T]) List(ctx *gin.Context) {
 
 // ViewEventHandler handles HTTP requests for view events
 type ViewEventHandler struct {
-	BaseEventHandler[model.ViewEvent]
+	BaseEventHandler[models.ViewEvent]
 }
 
 // NewViewEventHandler creates a new view event handler
-func NewViewEventHandler(service service.EventServiceInterface[model.ViewEvent]) *ViewEventHandler {
+func NewViewEventHandler(service service.EventServiceInterface[models.ViewEvent], appCtx app_context.AppContext) *ViewEventHandler {
 	return &ViewEventHandler{
-		BaseEventHandler: BaseEventHandler[model.ViewEvent]{
+		BaseEventHandler: BaseEventHandler[models.ViewEvent]{
 			service: service,
+			appCtx:  appCtx,
 		},
 	}
 }
 
 // LikeEventHandler handles HTTP requests for like events
 type LikeEventHandler struct {
-	BaseEventHandler[model.LikeEvent]
+	BaseEventHandler[models.LikeEvent]
 }
 
 // NewLikeEventHandler creates a new like event handler
-func NewLikeEventHandler(service service.EventServiceInterface[model.LikeEvent]) *LikeEventHandler {
+func NewLikeEventHandler(service service.EventServiceInterface[models.LikeEvent], appCtx app_context.AppContext) *LikeEventHandler {
 	return &LikeEventHandler{
-		BaseEventHandler: BaseEventHandler[model.LikeEvent]{
+		BaseEventHandler: BaseEventHandler[models.LikeEvent]{
 			service: service,
+			appCtx:  appCtx,
 		},
 	}
 }
 
 // CommentEventHandler handles HTTP requests for comment events
 type CommentEventHandler struct {
-	BaseEventHandler[model.CommentEvent]
+	BaseEventHandler[models.CommentEvent]
 }
 
 // NewCommentEventHandler creates a new comment event handler
-func NewCommentEventHandler(service service.EventServiceInterface[model.CommentEvent]) *CommentEventHandler {
+func NewCommentEventHandler(service service.EventServiceInterface[models.CommentEvent], appCtx app_context.AppContext) *CommentEventHandler {
 	return &CommentEventHandler{
-		BaseEventHandler: BaseEventHandler[model.CommentEvent]{
+		BaseEventHandler: BaseEventHandler[models.CommentEvent]{
 			service: service,
+			appCtx:  appCtx,
 		},
 	}
 }
 
 // ShareEventHandler handles HTTP requests for share events
 type ShareEventHandler struct {
-	BaseEventHandler[model.ShareEvent]
+	BaseEventHandler[models.ShareEvent]
 }
 
 // NewShareEventHandler creates a new share event handler
-func NewShareEventHandler(service service.EventServiceInterface[model.ShareEvent]) *ShareEventHandler {
+func NewShareEventHandler(service service.EventServiceInterface[models.ShareEvent], appCtx app_context.AppContext) *ShareEventHandler {
 	return &ShareEventHandler{
-		BaseEventHandler: BaseEventHandler[model.ShareEvent]{
+		BaseEventHandler: BaseEventHandler[models.ShareEvent]{
 			service: service,
+			appCtx:  appCtx,
 		},
 	}
 }
 
 // WatchEventHandler handles HTTP requests for watch events
 type WatchEventHandler struct {
-	BaseEventHandler[model.WatchEvent]
-	watchService service.WatchEventServiceInterface[model.WatchEvent]
+	BaseEventHandler[models.WatchEvent]
+	watchService service.WatchEventServiceInterface[models.WatchEvent]
 }
 
 // NewWatchEventHandler creates a new watch event handler
-func NewWatchEventHandler(service service.WatchEventServiceInterface[model.WatchEvent]) *WatchEventHandler {
+func NewWatchEventHandler(service service.WatchEventServiceInterface[models.WatchEvent], appCtx app_context.AppContext) *WatchEventHandler {
 	return &WatchEventHandler{
-		BaseEventHandler: BaseEventHandler[model.WatchEvent]{
+		BaseEventHandler: BaseEventHandler[models.WatchEvent]{
 			service: service,
+			appCtx:  appCtx,
 		},
 		watchService: service,
 	}
@@ -199,7 +215,7 @@ func (h *WatchEventHandler) CalculateWatchTimeByTimeRange(ctx *gin.Context) {
 
 	videoID := ctx.Param("videoId")
 	if videoID == "" {
-		helper.BuildErrorGinResponse(ctx, helper.NewError("video_id required", http.StatusBadRequest))
+		helper.BuildErrorGinResponse(ctx, apperror.ErrInvalidRequest(nil))
 		return
 	}
 
@@ -213,7 +229,7 @@ func (h *WatchEventHandler) CalculateWatchTimeByTimeRange(ctx *gin.Context) {
 	if startTimeStr != "" {
 		startTime, err = time.Parse(time.RFC3339, startTimeStr)
 		if err != nil {
-			helper.BuildErrorGinResponse(ctx, helper.NewError("invalid start_time format", http.StatusBadRequest))
+			helper.BuildErrorGinResponse(ctx, apperror.ErrInvalidTimeFormat(err))
 			return
 		}
 	} else {
@@ -223,7 +239,7 @@ func (h *WatchEventHandler) CalculateWatchTimeByTimeRange(ctx *gin.Context) {
 	if endTimeStr != "" {
 		endTime, err = time.Parse(time.RFC3339, endTimeStr)
 		if err != nil {
-			helper.BuildErrorGinResponse(ctx, helper.NewError("invalid end_time format", http.StatusBadRequest))
+			helper.BuildErrorGinResponse(ctx, apperror.ErrInvalidTimeFormat(err))
 			return
 		}
 	} else {
@@ -233,9 +249,9 @@ func (h *WatchEventHandler) CalculateWatchTimeByTimeRange(ctx *gin.Context) {
 	// Parse additional conditions
 	conditions := parseQueryConditions(ctx)
 
-	watchTime, err := h.watchService.CalculateWatchTimeByTimeRange(ctx, videoID, startTime, endTime, conditions)
-	if err != nil {
-		helper.BuildErrorGinResponse(ctx, err)
+	watchTime, appErr := h.watchService.CalculateWatchTimeByTimeRange(ctx, videoID, startTime, endTime, conditions)
+	if appErr != nil {
+		helper.BuildErrorGinResponse(ctx, appErr)
 		return
 	}
 
