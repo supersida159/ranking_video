@@ -11,6 +11,6 @@ type PubSub interface {
 }
 
 const (
-	TopicUpdateUser   Topic = "TopicUpdateUser"
-	TopicUpdateParent Topic = "TopicUpdateParent"
+	TopicNewEvent    Topic = "TopicNewEvent"
+	TopicExpireEvent Topic = "TopicExpireEvent"
 )

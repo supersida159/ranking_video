@@ -8,8 +8,13 @@ import (
 	"reflect"
 )
 
+// EventEntity defines the required fields for event entities
+type EventEntity interface {
+	GetVideoID() string // Method to retrieve VideoID
+}
+
 // EventServiceInterface defines the common methods for event services
-type EventServiceInterface[T any] interface {
+type EventServiceInterface[T EventEntity] interface {
 	Add(ctx context.Context, event T) *apperror.AppError
 	SoftDelete(ctx context.Context, id uint) *apperror.AppError
 	Count(ctx context.Context, conditions map[string]interface{}) (int64, *apperror.AppError)
@@ -17,13 +22,13 @@ type EventServiceInterface[T any] interface {
 }
 
 // EventService is a generic service for event entities
-type EventService[T any] struct {
+type EventService[T EventEntity] struct {
 	storage  EventServiceInterface[T]
 	producer *kafka.Producer
 }
 
 // NewEventService creates a new event service instance
-func NewEventService[T any](storage EventServiceInterface[T], producer *kafka.Producer) *EventService[T] {
+func NewEventService[T EventEntity](storage EventServiceInterface[T], producer *kafka.Producer) *EventService[T] {
 	return &EventService[T]{
 		storage:  storage,
 		producer: producer,
@@ -36,7 +41,7 @@ func (s *EventService[T]) Add(ctx context.Context, event T) *apperror.AppError {
 	eventType := reflect.TypeOf(event).Name()
 
 	// Create a Kafka event
-	kafkaEvent, err := kafka.NewEvent(eventType, 1)
+	kafkaEvent, err := kafka.NewEvent(eventType, event.GetVideoID())
 	if err != nil {
 		return apperror.ErrFailedCreateEvent(err)
 	}
