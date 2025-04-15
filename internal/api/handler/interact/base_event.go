@@ -14,7 +14,7 @@ import (
 )
 
 // BaseEventHandler provides common handler functionality for events
-type BaseEventHandler[T any] struct {
+type BaseEventHandler[T service.EventEntity] struct {
 	service service.EventServiceInterface[T]
 	appCtx  app_context.AppContext
 }
