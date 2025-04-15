@@ -1,8 +1,8 @@
 package handler
 
 import (
-	service "ranking_video/internal/interact_bussiness"
 	_ "ranking_video/internal/models"
+	service "ranking_video/internal/service_interact"
 	apperror "ranking_video/pkg/app_error"
 	helper "ranking_video/pkg/utils"
 	"ranking_video/pkg/utils/app_context"

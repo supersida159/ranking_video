@@ -1,4 +1,4 @@
-package service
+package service_interact
 
 import (
 	"context"
@@ -36,7 +36,7 @@ func (s *EventService[T]) Add(ctx context.Context, event T) *apperror.AppError {
 	eventType := reflect.TypeOf(event).Name()
 
 	// Create a Kafka event
-	kafkaEvent, err := kafka.NewEvent(eventType, event)
+	kafkaEvent, err := kafka.NewEvent(eventType, 1)
 	if err != nil {
 		return apperror.ErrFailedCreateEvent(err)
 	}
