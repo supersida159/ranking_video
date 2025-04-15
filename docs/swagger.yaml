@@ -1,0 +1,160 @@
+basePath: /api/v1
+definitions:
+  ranking_video_pkg_utils.Paging:
+    properties:
+      cursor:
+        description: support cusor with UID
+        type: string
+      limit:
+        type: integer
+      next_cursor:
+        type: string
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  ranking_video_pkg_utils.Response:
+    properties:
+      data: {}
+      errors: {}
+      message:
+        type: string
+      status:
+        type: integer
+      time_stamp:
+        type: string
+    type: object
+host: localhost:8089
+info:
+  contact:
+    email: 96duongtung@example.com
+    url: http://www.example.com/support
+  description: API Server for Ranking Video application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Ranking Video API
+  version: "1.0"
+paths:
+  /events:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of events with filtering, sorting, and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Sort fields (e.g. -created_at,+name for DESC and ASC)
+        in: query
+        name: sort
+        type: string
+      - description: Filter by start time
+        in: query
+        name: start_time
+        type: string
+      - description: Filter by end time
+        in: query
+        name: end_time
+        type: string
+      - description: Filter by any field name (can use >, <, >=, <= prefixes or CSV
+          for IN clause)
+        in: query
+        name: field_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ranking_video_pkg_utils.Response'
+            - properties:
+                data:
+                  type: array
+                paging:
+                  $ref: '#/definitions/ranking_video_pkg_utils.Paging'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+      summary: List events
+      tags:
+      - Events
+    post:
+      consumes:
+      - application/json
+      description: Receive event data from request body and publish it to kafka then
+        store it to mysqlDB
+      parameters:
+      - description: Event data
+        in: body
+        name: event
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+      summary: Add a new event(like, comment, share, view)
+      tags:
+      - Events
+  /events/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Marks an event as deleted without removing it from the database
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ranking_video_pkg_utils.Response'
+      summary: Soft delete an event
+      tags:
+      - Events
+swagger: "2.0"
