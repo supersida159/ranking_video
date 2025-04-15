@@ -44,6 +44,8 @@ The system architecture is divided into several key layers:
     }
     ```
   - **Swagger UI:** Available at `GET /swagger/*any` for API documentation and testing.
+![Screenshot 2025-04-15 at 23 20 49](https://github.com/user-attachments/assets/1de353f9-5c46-4ef0-bce0-7c6edd649a04)
+
 
 ### 2.2 Processing Layer
 - **Interactive Service:**  
