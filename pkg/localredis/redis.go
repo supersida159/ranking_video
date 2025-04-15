@@ -11,8 +11,6 @@ import (
 	goredis "github.com/redis/go-redis/v9" // Updated import path
 
 	"github.com/sirupsen/logrus"
-	"github.com/supersida159/e-commerce/api-services/common"
-	"github.com/supersida159/e-commerce/api-services/src/users/entities_user"
 )
 
 const (
@@ -40,30 +38,24 @@ var ErrKeyLocked = fmt.Errorf("key is already locked")
 type Config struct {
 	Address  string
 	Password string
-	Database int
 }
 
 type RedisWRealStore struct {
-	Client    *goredis.Client
-	RealStore RealStore
+	Client *goredis.Client
 }
 
 type Client interface {
 	RunExpireOrder(ctx context.Context)
 }
-type RealStore interface {
-	FindUser(ctx context.Context, condition map[string]interface{}, moreInfores ...string) (*entities_user.User, *common.AppError)
-}
 
 // NewRedis Redis interface with config
-func NewRedis(config Config, realStore RealStore) *RedisWRealStore {
+func NewRedis(config Config) *RedisWRealStore {
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
 	defer cancel()
 
 	rdb := goredis.NewClient(&goredis.Options{
 		Addr:     config.Address,
 		Password: config.Password,
-		DB:       config.Database,
 	})
 
 	pong, err := rdb.Ping(ctx).Result()
@@ -73,29 +65,13 @@ func NewRedis(config Config, realStore RealStore) *RedisWRealStore {
 	}
 
 	return &RedisWRealStore{
-		Client:    rdb,
-		RealStore: realStore,
+		Client: rdb,
 	}
 }
 func (r *RedisWRealStore) GetClient() *goredis.Client {
 	return r.Client
 }
-func (r *RedisWRealStore) FindUser(ctx context.Context, condition map[string]interface{}, moreInfores ...string) (*entities_user.User, *common.AppError) {
-	userID := condition["id"].(int)
-	var userInCache entities_user.User
-	err := r.Get(fmt.Sprintf("user-%d", userID), &userInCache)
-	if err != nil {
-		return &userInCache, nil
-	}
-	userInRealStore, appErr := r.RealStore.FindUser(ctx, condition, moreInfores...)
-	if appErr != nil {
-		return nil, appErr
-	}
-	go func() {
-		r.Set(fmt.Sprintf("user-%d", userID), userInRealStore)
-	}()
-	return userInRealStore, nil
-}
+
 func (r *RedisWRealStore) IsConnected() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
 	defer cancel()

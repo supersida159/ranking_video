@@ -1,0 +1,26 @@
+# General environment configuration
+ENVIRONMENT: "Development"
+HTTP_PORT: 8090
+GRPC_PORT: 8889
+AUTH_SECRET: "your-auth-secret"
+SECRET_KEY: "your-secret-key"
+
+# Database Configuration
+DATABASE_URI: "root:password@tcp(localhost:3308)/e-commerce?parseTime=true"
+DATABASE_TIMEOUT: 5 # Timeout in seconds for database connections
+
+# Redis Configuration
+REDIS_URI: "redis:6379"
+REDIS_PASSWORD: ""
+REDIS_DB: 0
+
+# Kafka Configuration
+KAFKA:
+  KAFKA_BROKERS: ["localhost:9092"]
+  KAFKA_RETRY: 3
+  KAFKA_CONSUMER_OFFSET_RESET: "earliest"
+  KAFKA_PRODUCER_REQUIRED_ACKS: 1
+  KAFKA_ENABLE_TLS: false
+  KAFKA_VERSION: "2.8.0"
+  KAFKA_TIMEOUT: 3000
+

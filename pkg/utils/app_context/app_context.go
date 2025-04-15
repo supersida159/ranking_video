@@ -1,8 +1,11 @@
 package app_context
 
 import (
-	dbs "ranking_video/pkg/db"
+	"ranking_video/internal/kafka"
+	config "ranking_video/pkg/config/env_config"
+	dbs "ranking_video/pkg/database"
 	"ranking_video/pkg/localredis"
+	"ranking_video/pkg/pubsub"
 
 	"gorm.io/gorm"
 
@@ -10,14 +13,14 @@ import (
 )
 
 type AppContext interface {
-	GetMainDBConnection() *gorm.DB
+	GetDBConnection() *gorm.DB
 	GetSecretKey() string
 	GetPubSub() pubsub.PubSub
 	GetCache() *localredis.RedisWRealStore
 	GetConfig() *config.Schema
-	GetValidatetor() *common.Validator
-	GetProducer() *producers.OrderProducer
-	GetConsumer() *consumerlocal.SagaConsumer
+	GetValidatetor() *validator.Validate
+	GetProducer() *kafka.Producer
+	GetConsumer() *kafka.Consumer
 }
 
 type AppCtx struct {
@@ -26,19 +29,20 @@ type AppCtx struct {
 	Cfg       *config.Schema
 	Cache     *localredis.RedisWRealStore
 	Validator *validator.Validate
-	Producer  *producers.OrderProducer
-	Consumer  *consumerlocal.SagaConsumer
+	Producer  *kafka.Producer
+	Consumer  *kafka.Consumer
 }
 
 func NewAppContext(dbs *dbs.Database,
 	pb pubsub.PubSub,
+	config *config.Schema,
 	cache *localredis.RedisWRealStore,
-	producer *producers.OrderProducer,
-	consumer *consumerlocal.SagaConsumer) *AppCtx {
+	producer *kafka.Producer,
+	consumer *kafka.Consumer) *AppCtx {
 	return &AppCtx{
 		Dbs:       dbs,
 		Pb:        pb,
-		Cfg:       config.GetConfig(),
+		Cfg:       config,
 		Cache:     cache,
 		Validator: validator.New(),
 		Producer:  producer,
@@ -46,7 +50,7 @@ func NewAppContext(dbs *dbs.Database,
 	}
 }
 
-func (ctx *AppCtx) GetMainDBConnection() *gorm.DB {
+func (ctx *AppCtx) GetDBConnection() *gorm.DB {
 	return ctx.Dbs.GetDB()
 }
 
@@ -66,11 +70,11 @@ func (ctx *AppCtx) GetConfig() *config.Schema {
 	return ctx.Cfg
 }
 
-func (ctx *AppCtx) GetProducer() *producers.OrderProducer {
+func (ctx *AppCtx) GetProducer() *kafka.Producer {
 	return ctx.Producer
 }
 
-func (ctx *AppCtx) GetConsumer() *consumerlocal.SagaConsumer {
+func (ctx *AppCtx) GetConsumer() *kafka.Consumer {
 	return ctx.Consumer
 }
 

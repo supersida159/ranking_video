@@ -27,25 +27,22 @@ type Video struct {
 	Title        string  `gorm:"type:varchar(255);not null"`
 	Description  string  `gorm:"type:text"`
 	URL          string  `gorm:"type:varchar(512);not null"`
-	Duration     int     `gorm:"not null"`           // Duration in seconds
 	Score        float64 `gorm:"not null;default:0"` // Current calculated score
 	ViewCount    int     `gorm:"not null;default:0"`
 	LikeCount    int     `gorm:"not null;default:0"`
 	CommentCount int     `gorm:"not null;default:0"`
 	ShareCount   int     `gorm:"not null;default:0"`
-	WatchTime    int     `gorm:"not null;default:0"` // Total watch time in seconds
 	Status       string  `gorm:"type:enum('active','inactive','deleted');default:'active'"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 
 	// Foreign Key Relationship
-	Entity        Entity         `gorm:"foreignKey:EntityID"`
-	ViewEvents    []ViewEvent    `gorm:"foreignKey:VideoID"`
-	LikeEvents    []LikeEvent    `gorm:"foreignKey:VideoID"`
-	CommentEvents []CommentEvent `gorm:"foreignKey:VideoID"`
-	ShareEvents   []ShareEvent   `gorm:"foreignKey:VideoID"`
-	WatchEvents   []WatchEvent   `gorm:"foreignKey:VideoID"`
+	Entity        Entity         `gorm:"foreignKey:EntityID" json:"omitempty"`
+	ViewEvents    []ViewEvent    `gorm:"foreignKey:VideoID" json:"omitempty"`
+	LikeEvents    []LikeEvent    `gorm:"foreignKey:VideoID" json:"omitempty"`
+	CommentEvents []CommentEvent `gorm:"foreignKey:VideoID" json:"omitempty"`
+	ShareEvents   []ShareEvent   `gorm:"foreignKey:VideoID" json:"omitempty"`
 }
 
 // ViewEvent represents a user view on a video
@@ -58,8 +55,8 @@ type ViewEvent struct {
 	CreatedAt time.Time
 
 	// Foreign Key Relationship
-	User  Entity `gorm:"foreignKey:UserID"`
-	Video Video  `gorm:"foreignKey:VideoID"`
+	User  Entity `gorm:"foreignKey:UserID" json:"omitempty"`
+	Video Video  `gorm:"foreignKey:VideoID" json:"omitempty"`
 }
 
 // LikeEvent represents a user like on a video
@@ -72,8 +69,8 @@ type LikeEvent struct {
 	CreatedAt time.Time
 
 	// Foreign Key Relationship
-	User  Entity `gorm:"foreignKey:UserID"`
-	Video Video  `gorm:"foreignKey:VideoID"`
+	User  Entity `gorm:"foreignKey:UserID" json:"omitempty"`
+	Video Video  `gorm:"foreignKey:VideoID" json:"omitempty"`
 }
 
 // CommentEvent represents a user comment on a video
@@ -88,8 +85,8 @@ type CommentEvent struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	// Foreign Key Relationship
-	User  Entity `gorm:"foreignKey:UserID"`
-	Video Video  `gorm:"foreignKey:VideoID"`
+	User  Entity `gorm:"foreignKey:UserID" json:"omitempty"`
+	Video Video  `gorm:"foreignKey:VideoID" json:"omitempty"`
 }
 
 // ShareEvent represents a video share by a user
@@ -103,23 +100,8 @@ type ShareEvent struct {
 	CreatedAt   time.Time
 
 	// Foreign Key Relationship
-	User  Entity `gorm:"foreignKey:UserID"`
-	Video Video  `gorm:"foreignKey:VideoID"`
-}
-
-// WatchEvent represents a user's watch time on a video
-type WatchEvent struct {
-	ID        uint   `gorm:"primaryKey;autoIncrement"`
-	UserID    string `gorm:"type:varchar(36);index;not null"`
-	VideoID   string `gorm:"type:varchar(36);index;not null"`
-	Duration  int    `gorm:"not null"` // Watch time in seconds
-	Completed bool   `gorm:"not null;default:false"`
-	IP        string `gorm:"type:varchar(45)"`
-	CreatedAt time.Time
-
-	// Foreign Key Relationship
-	User  Entity `gorm:"foreignKey:UserID"`
-	Video Video  `gorm:"foreignKey:VideoID"`
+	User  Entity `gorm:"foreignKey:UserID" json:"omitempty"`
+	Video Video  `gorm:"foreignKey:VideoID" json:"omitempty"`
 }
 
 // UserPreference for personalized ranking
@@ -130,5 +112,5 @@ type UserPreference struct {
 	UpdatedAt  time.Time
 
 	// Foreign Key Relationship
-	User Entity `gorm:"foreignKey:UserID"`
+	User Entity `gorm:"foreignKey:UserID" json:"omitempty"`
 }
