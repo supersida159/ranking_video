@@ -15,6 +15,8 @@ import (
 	"ranking_video/pkg/utils/app_context"
 	"strconv"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -150,8 +152,14 @@ func (engine *consumerEngine) handleExpiredVideoEvent(ctx context.Context, msg *
 	}
 
 	// Create video model from the counts
+	objectID, err := primitive.ObjectIDFromHex(videoID)
+	if err != nil {
+		log.Printf("Error converting videoID to ObjectID: %v", err)
+		return apperror.ErrInvalidRequest(err)
+	}
+
 	video := &models.Video{
-		ID: videoID,
+		ID: objectID,
 	}
 
 	// Parse counts from Redis hash
@@ -167,7 +175,7 @@ func (engine *consumerEngine) handleExpiredVideoEvent(ctx context.Context, msg *
 	}
 
 	// Update database with the video counts
-	db := engine.appCtx.GetDBConnection()
+	db := engine.appCtx.GetMongoDB()
 	storage := repository.NewVideoCountRepository(db)
 	videoCountService := services_processor.NewVideoCountService(storage)
 

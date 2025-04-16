@@ -7,13 +7,14 @@ import (
 	"ranking_video/pkg/localredis"
 	"ranking_video/pkg/pubsub"
 
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/go-playground/validator/v10"
 )
 
 type AppContext interface {
-	GetDBConnection() *gorm.DB
+	GetMongoDatabase() *mongo.Database
+	GetMongoDB() *dbs.Database
 	GetSecretKey() string
 	GetPubSub() pubsub.PubSub
 	GetCache() *localredis.RedisWRealStore
@@ -50,34 +51,47 @@ func NewAppContext(dbs *dbs.Database,
 	}
 }
 
-func (ctx *AppCtx) GetDBConnection() *gorm.DB {
-	return ctx.Dbs.GetDB()
+// GetMongoDatabase returns the MongoDB database instance
+func (ctx *AppCtx) GetMongoDatabase() *mongo.Database {
+	return ctx.Dbs.GetDatabase()
 }
 
+// GetMongoDB returns the Database wrapper
+func (ctx *AppCtx) GetMongoDB() *dbs.Database {
+	return ctx.Dbs
+}
+
+// GetSecretKey returns the authentication secret key
 func (ctx *AppCtx) GetSecretKey() string {
 	return ctx.Cfg.AuthSecret
 }
 
+// GetPubSub returns the pubsub instance
 func (ctx *AppCtx) GetPubSub() pubsub.PubSub {
 	return ctx.Pb
 }
 
+// GetCache returns the Redis cache instance
 func (ctx *AppCtx) GetCache() *localredis.RedisWRealStore {
 	return ctx.Cache
 }
 
+// GetConfig returns the application configuration
 func (ctx *AppCtx) GetConfig() *config.Schema {
 	return ctx.Cfg
 }
 
+// GetProducer returns the Kafka producer
 func (ctx *AppCtx) GetProducer() *kafka.Producer {
 	return ctx.Producer
 }
 
+// GetConsumer returns the Kafka consumer
 func (ctx *AppCtx) GetConsumer() *kafka.Consumer {
 	return ctx.Consumer
 }
 
+// GetValidatetor returns the validator instance
 func (ctx *AppCtx) GetValidatetor() *validator.Validate {
 	return ctx.Validator
 }

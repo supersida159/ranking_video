@@ -4,7 +4,6 @@ import (
 	"fmt" // Added for port configuration
 	route "ranking_video/internal/api/route/inetract"
 	"ranking_video/internal/kafka"
-	"ranking_video/internal/models"
 	config "ranking_video/pkg/config/env_config"
 	kafkaconfig "ranking_video/pkg/config/kafka"
 	"ranking_video/pkg/database"
@@ -52,14 +51,14 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	err = db.AutoMigrate(
-		models.Entity{},
-		models.CommentEvent{},
-		models.LikeEvent{},
-		models.ShareEvent{},
-		models.ViewEvent{},
-		models.Video{},
-	)
+	// err = db.AutoMigrate(
+	// 	models.Entity{},
+	// 	models.CommentEvent{},
+	// 	models.LikeEvent{},
+	// 	models.ShareEvent{},
+	// 	models.ViewEvent{},
+	// 	models.Video{},
+	// )
 	// Consider running migrations if isMigrate is true
 	// database.Migrate(db) // Example
 

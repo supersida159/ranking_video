@@ -14,7 +14,7 @@ type ViewEventHandler struct {
 
 // NewViewEventHandler creates a new view event handler
 func NewViewEventHandler(appCtx app_context.AppContext) *ViewEventHandler {
-	dbs := appCtx.GetDBConnection()
+	dbs := appCtx.GetMongoDatabase()
 	store := repository.NewEventRepository[models.ViewEvent](dbs)
 	service := service.NewEventService[models.ViewEvent](store, appCtx.GetProducer())
 	return &ViewEventHandler{
@@ -32,7 +32,7 @@ type LikeEventHandler struct {
 
 // NewLikeEventHandler creates a new like event handler
 func NewLikeEventHandler(appCtx app_context.AppContext) *LikeEventHandler {
-	dbs := appCtx.GetDBConnection()
+	dbs := appCtx.GetMongoDatabase()
 	store := repository.NewEventRepository[models.LikeEvent](dbs)
 	service := service.NewEventService[models.LikeEvent](store, appCtx.GetProducer())
 	return &LikeEventHandler{
@@ -50,7 +50,7 @@ type CommentEventHandler struct {
 
 // NewCommentEventHandler creates a new comment event handler
 func NewCommentEventHandler(appCtx app_context.AppContext) *CommentEventHandler {
-	dbs := appCtx.GetDBConnection()
+	dbs := appCtx.GetMongoDatabase()
 	store := repository.NewEventRepository[models.CommentEvent](dbs)
 	service := service.NewEventService[models.CommentEvent](store, appCtx.GetProducer())
 	return &CommentEventHandler{
@@ -68,7 +68,7 @@ type ShareEventHandler struct {
 
 // NewShareEventHandler creates a new share event handler
 func NewShareEventHandler(appCtx app_context.AppContext) *ShareEventHandler {
-	dbs := appCtx.GetDBConnection()
+	dbs := appCtx.GetMongoDatabase()
 	store := repository.NewEventRepository[models.ShareEvent](dbs)
 	service := service.NewEventService[models.ShareEvent](store, appCtx.GetProducer())
 	return &ShareEventHandler{

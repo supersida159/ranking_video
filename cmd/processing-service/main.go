@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"ranking_video/internal/kafka"
-	"ranking_video/internal/models"
 	config "ranking_video/pkg/config/env_config"
 	kafkaconfig "ranking_video/pkg/config/kafka"
 	"ranking_video/pkg/database"
@@ -31,10 +30,10 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 
-	err = db.AutoMigrate(
-		models.Video{},
-		models.VideoCountDaily{},
-	)
+	// err = db.AutoMigrate(
+	// 	models.Video{},
+	// 	models.VideoCountDaily{},
+	// )
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to run database migrations")
 	}

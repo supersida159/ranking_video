@@ -6,7 +6,7 @@ AUTH_SECRET: "your-auth-secret"
 SECRET_KEY: "your-secret-key"
 
 # Database Configuration
-DATABASE_URI: "root:password@tcp(localhost:3308)/e-commerce?parseTime=true"
+DATABASE_URI: "mongodb://root:password@localhost:27017"
 DATABASE_TIMEOUT: 5 # Timeout in seconds for database connections
 
 # Redis Configuration
